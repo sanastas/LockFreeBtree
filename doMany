@@ -1,0 +1,16 @@
+#!/bin/bash
+
+for a in `seq 1000`
+do
+	rm ./outputs/res*.txt
+
+	for a in `seq 10000`
+	do
+		echo -n "$a "
+		./test 1000 > ./outputs/res$a.txt
+	done
+	
+done
+	
+echo;
+

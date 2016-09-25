@@ -1,0 +1,173 @@
+#!/bin/bash
+
+DIR1=$1
+DIR2=$2
+
+# the number of coulomns
+N_COLUMN=2;
+STAGE_1_COLUMN=6;
+STAGE_2_COLUMN=8;
+TOTAL_COLUMN=12;
+
+MAX_S1_INSERT_COLUMN=14
+AVG_S1_INSERT_COLUMN=16
+MAX_S2_INSERT_COLUMN=18
+MAX_S2_DELETE_COLUMN=20
+MAX_S2_SEARCH_COLUMN=22
+AVG_S2_INSERT_COLUMN=24
+AVG_S2_DELETE_COLUMN=26
+AVG_S2_SEARCH_COLUMN=28
+
+N_TRIES=5;
+
+OUTPUT1="output1.txt"
+OUT_ALL1="output1_all.txt"
+
+echo -n > $OUT_ALL1
+
+for out in $OUTPUT1
+do
+
+echo -n > $out
+
+algorithm_name="lock-free btree algorithm"
+
+echo "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" >> $out
+echo "|     |        |             |                                                                           $algorithm_name		                                                                                                                                      |" >> $out
+echo "|  #  |    N   | #ofThreads  |--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|" >> $out
+echo "|     |        |             |  avg_stage1  |  max_stage1  |  avg_stage2  | max_stage2 |  avg_total  |  max_total   ||  max_s1_insert  |  avg_s1_insert  |  max_s2_insert  | max_s2_delete |  max_s2_search  |  avg_s2_insert  |  avg_s2_delete  |  avg_s2_search   |" >> $out
+echo "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------" >> $out
+
+done
+
+test_num=0;
+
+#8k
+for N in 1000 10000 100000 1000000
+do
+
+	if [ $N == 1000000 ]; then
+		N_TRIES=5
+	fi
+	
+	for T in 4 8 32 128 512
+	do
+
+		cd ./$DIR1
+		make clean >& /dev/null
+		make MAX_THREADS=$T MIN_ENTRIES=200 MAX_ENTRIES=450>& /dev/null
+		cd ..
+
+
+		let "test_num += 1"
+
+		printf "%4d " $test_num	>> $OUTPUT1
+		printf %10d $N	>> $OUTPUT1
+		printf %8d $T	>> $OUTPUT1
+		
+		#--------------
+		max_stage1=0;
+		max_stage2=0;
+		max_total=0;
+
+		sum_stage1=0;
+		sum_stage2=0;
+		sum_total=0;
+	
+		avg_stage1=0;
+		avg_stage2=0;
+		avg_total=0;
+		
+		max_s1_insert_max=0;
+		max_s2_insert_max=0;
+		max_s2_delete_max=0;
+		max_s2_search_max=0;
+		
+		avg_s1_insert_sum=0;
+		avg_s2_insert_sum=0;
+		avg_s2_delete_sum=0;
+		avg_s2_search_sum=0;
+		
+		avg_s1_insert_avg=0;
+		avg_s2_insert_avg=0;
+		avg_s2_delete_avg=0;
+		avg_s2_search_avg=0;
+		
+		#--------------
+				
+		for L in {`seq $N_TRIES`}
+		do
+
+			temp=$(./$DIR1/test $N)
+			test_val=$test_num
+			n_val=$(echo $temp| cut -d" " -f$N_COLUMN)
+			stage1_val=$(echo $temp| cut -d" " -f$STAGE_1_COLUMN)
+			stage2_val=$(echo $temp| cut -d" " -f$STAGE_2_COLUMN)
+			total_val=$(echo $temp| cut -d" " -f$TOTAL_COLUMN)
+				
+			max_s1_insert=$(echo $temp| cut -d" " -f$MAX_S1_INSERT_COLUMN)
+			avg_s1_insert=$(echo $temp| cut -d" " -f$AVG_S1_INSERT_COLUMN)
+			max_s2_insert=$(echo $temp| cut -d" " -f$MAX_S2_INSERT_COLUMN)
+			max_s2_delete=$(echo $temp| cut -d" " -f$MAX_S2_DELETE_COLUMN)
+			max_s2_search=$(echo $temp| cut -d" " -f$MAX_S2_SEARCH_COLUMN)
+			avg_s2_insert=$(echo $temp| cut -d" " -f$AVG_S2_INSERT_COLUMN)
+			avg_s2_delete=$(echo $temp| cut -d" " -f$AVG_S2_DELETE_COLUMN)
+			avg_s2_search=$(echo $temp| cut -d" " -f$AVG_S2_SEARCH_COLUMN)
+			
+			echo $temp >> $OUT_ALL1
+			
+			sum_stage1=$(echo $sum_stage1+$stage1_val | bc -l)
+			sum_stage2=$(echo $sum_stage2+$stage2_val | bc -l)
+			sum_total=$(echo $sum_total+$total_val | bc -l)
+	
+			max_stage1=`echo - | awk '{ if('$max_stage1'>'$stage1_val') { print '$max_stage1' } else {print '$stage1_val' }}'`
+			max_stage2=`echo - | awk '{ if('$max_stage2'>'$stage2_val') { print '$max_stage2' } else {print '$stage2_val' }}'`
+			max_total=`echo - | awk '{ if('$max_total'>'$total_val') { print '$max_total' } else {print '$total_val' }}'`
+			
+			max_s1_insert_max=`echo - | awk '{ if('$max_s1_insert_max'>'$max_s1_insert') { print '$max_s1_insert_max' } else {print '$max_s1_insert' }}'`
+			max_s2_insert_max=`echo - | awk '{ if('$max_s2_insert_max'>'$max_s2_insert') { print '$max_s2_insert_max' } else {print '$max_s2_insert' }}'`
+			max_s2_delete_max=`echo - | awk '{ if('$max_s2_delete_max'>'$max_s2_delete') { print '$max_s2_delete_max' } else {print '$max_s2_delete' }}'`
+			max_s2_search_max=`echo - | awk '{ if('$max_s2_search_max'>'$max_s2_search') { print '$max_s2_search_max' } else {print '$max_s2_search' }}'`
+			
+			avg_s1_insert_sum=$(echo $avg_s1_insert_sum+$avg_s1_insert | bc -l)
+			avg_s2_insert_sum=$(echo $avg_s2_insert_sum+$avg_s2_insert | bc -l)
+			avg_s2_delete_sum=$(echo $avg_s2_delete_sum+$avg_s2_delete | bc -l)
+			avg_s2_search_sum=$(echo $avg_s2_search_sum+$avg_s2_search | bc -l)
+			
+		done 
+
+		avg_stage1=$(echo $sum_stage1/$N_TRIES | bc -l)
+		avg_stage2=$(echo $sum_stage2/$N_TRIES | bc -l)
+		avg_total=$(echo $sum_total/$N_TRIES | bc -l)	
+		
+		avg_s1_insert_avg=$(echo $avg_s1_insert_sum/$N_TRIES | bc -l);
+		avg_s2_insert_avg=$(echo $avg_s2_insert_sum/$N_TRIES | bc -l);
+		avg_s2_delete_avg=$(echo $avg_s2_delete_sum/$N_TRIES | bc -l);
+		avg_s2_search_avg=$(echo $avg_s2_delete_sum/$N_TRIES | bc -l);
+		
+		
+		printf %17lf $avg_stage1	>> $OUTPUT1
+		printf %16lf $max_stage1	>> $OUTPUT1
+		printf %15lf $avg_stage2	>> $OUTPUT1
+		printf %13lf $max_stage2	>> $OUTPUT1
+		printf %15lf $avg_total	>> $OUTPUT1
+		printf %13lf $max_total	>> $OUTPUT1
+		printf %16lf $max_s1_insert_max	>> $OUTPUT1
+		printf %19lf $avg_s1_insert_avg	>> $OUTPUT1
+		printf %19lf $max_s2_insert_max	>> $OUTPUT1
+		printf %17lf $max_s2_delete_max	>> $OUTPUT1
+		printf %17lf $max_s2_search_max	>> $OUTPUT1
+		printf %17lf $avg_s2_insert_avg	>> $OUTPUT1
+		printf %19lf $avg_s2_delete_avg	>> $OUTPUT1
+		printf %19lf $avg_s2_search_avg	>> $OUTPUT1
+		
+		echo "" >> $OUTPUT1
+		
+		
+		
+	done
+
+done
+
+
+

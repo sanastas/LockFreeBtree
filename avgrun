@@ -1,0 +1,127 @@
+#!/bin/bash
+
+OUT_ALL1="outputs/log.txt"
+
+# the number of coulomns
+N_COLUMN=2;
+STAGE_1_COLUMN=8;
+STAGE_2_COLUMN=10;
+TOTAL_COLUMN=12;
+
+MAX_S1_INSERT_COLUMN=14
+AVG_S1_INSERT_COLUMN=16
+MAX_S2_INSERT_COLUMN=18
+MAX_S2_DELETE_COLUMN=20
+MAX_S2_SEARCH_COLUMN=22
+AVG_S2_INSERT_COLUMN=24
+AVG_S2_DELETE_COLUMN=26
+AVG_S2_SEARCH_COLUMN=28
+
+#--------------
+max_stage1=0;
+max_stage2=0;
+max_total=0;
+
+sum_stage1=0;
+sum_stage2=0;
+sum_total=0;
+
+avg_stage1=0;
+avg_stage2=0;
+avg_total=0;
+
+max_s1_insert_max=0;
+max_s2_insert_max=0;
+max_s2_delete_max=0;
+max_s2_search_max=0;
+
+avg_s1_insert_sum=0;
+avg_s2_insert_sum=0;
+avg_s2_delete_sum=0;
+avg_s2_search_sum=0;
+
+avg_s1_insert_avg=0;
+avg_s2_insert_avg=0;
+avg_s2_delete_avg=0;
+avg_s2_search_avg=0;
+
+for L in {`seq $1`}
+do
+
+	temp=$(./test $2 $3)
+	test_val=$test_num
+	n_val=$(echo $temp| cut -d" " -f$N_COLUMN)
+	stage1_val=$(echo $temp| cut -d" " -f$STAGE_1_COLUMN)
+	stage2_val=$(echo $temp| cut -d" " -f$STAGE_2_COLUMN)
+	total_val=$(echo $temp| cut -d" " -f$TOTAL_COLUMN)
+
+	max_s1_insert=$(echo $temp| cut -d" " -f$MAX_S1_INSERT_COLUMN)
+	avg_s1_insert=$(echo $temp| cut -d" " -f$AVG_S1_INSERT_COLUMN)
+	max_s2_insert=$(echo $temp| cut -d" " -f$MAX_S2_INSERT_COLUMN)
+	max_s2_delete=$(echo $temp| cut -d" " -f$MAX_S2_DELETE_COLUMN)
+	max_s2_search=$(echo $temp| cut -d" " -f$MAX_S2_SEARCH_COLUMN)
+	avg_s2_insert=$(echo $temp| cut -d" " -f$AVG_S2_INSERT_COLUMN)
+	avg_s2_delete=$(echo $temp| cut -d" " -f$AVG_S2_DELETE_COLUMN)
+	avg_s2_search=$(echo $temp| cut -d" " -f$AVG_S2_SEARCH_COLUMN)
+		
+	echo $temp >> $OUT_ALL1
+	
+	sum_stage1=$(echo $sum_stage1 $stage1_val | awk '{print $1+$2}')
+	sum_stage2=$(echo $sum_stage2 $stage2_val | awk '{print $1+$2}')
+	sum_total=$(echo $sum_total $total_val | awk '{print $1+$2}')
+
+	max_stage1=`echo - | awk '{ if('$max_stage1'>'$stage1_val') { print '$max_stage1' } else {print '$stage1_val' }}'`
+	max_stage2=`echo - | awk '{ if('$max_stage2'>'$stage2_val') { print '$max_stage2' } else {print '$stage2_val' }}'`
+	max_total=`echo - | awk '{ if('$max_total'>'$total_val') { print '$max_total' } else {print '$total_val' }}'`
+
+	max_s1_insert_max=`echo - | awk '{ if('$max_s1_insert_max'>'$max_s1_insert') { print '$max_s1_insert_max' } else {print '$max_s1_insert' }}'`
+	max_s2_insert_max=`echo - | awk '{ if('$max_s2_insert_max'>'$max_s2_insert') { print '$max_s2_insert_max' } else {print '$max_s2_insert' }}'`
+	max_s2_delete_max=`echo - | awk '{ if('$max_s2_delete_max'>'$max_s2_delete') { print '$max_s2_delete_max' } else {print '$max_s2_delete' }}'`
+	max_s2_search_max=`echo - | awk '{ if('$max_s2_search_max'>'$max_s2_search') { print '$max_s2_search_max' } else {print '$max_s2_search' }}'`
+
+	avg_s1_insert_sum=$(echo $avg_s1_insert_sum $avg_s1_insert | awk '{print $1+$2}')
+	avg_s2_insert_sum=$(echo $avg_s2_insert_sum $avg_s2_insert | awk '{print $1+$2}')
+	avg_s2_delete_sum=$(echo $avg_s2_delete_sum $avg_s2_delete | awk '{print $1+$2}')
+	avg_s2_search_sum=$(echo $avg_s2_search_sum $avg_s2_search | awk '{print $1+$2}')
+	
+done
+
+avg_stage1=$(echo $sum_stage1 $1 | awk '{print $1/$2}')
+avg_stage2=$(echo $sum_stage2 $1 | awk '{print $1/$2}')
+avg_total=$(echo $sum_total $1 | awk '{print $1/$2}')
+
+avg_s1_insert_avg=$(echo $avg_s1_insert_sum $1 | awk '{print $1/$2}');
+avg_s2_insert_avg=$(echo $avg_s2_insert_sum $1 | awk '{print $1/$2}');
+avg_s2_delete_avg=$(echo $avg_s2_delete_sum $1 | awk '{print $1/$2}');
+avg_s2_search_avg=$(echo $avg_s2_search_sum $1 | awk '{print $1/$2}');
+
+
+printf %lf $avg_stage1
+printf "\t"
+printf %lf $max_stage1
+printf "\t"
+printf %lf $avg_stage2
+printf "\t"
+printf %lf $max_stage2
+printf "\t"
+printf %lf $avg_total
+printf "\t"
+printf %lf $max_total
+printf "\t"
+printf %lf $max_s1_insert_max
+printf "\t"
+printf %lf $avg_s1_insert_avg
+printf "\t"
+printf %lf $max_s2_insert_max
+printf "\t"
+printf %lf $max_s2_delete_max
+printf "\t"
+printf %lf $max_s2_search_max
+printf "\t"
+printf %lf $avg_s2_insert_avg
+printf "\t"
+printf %lf $avg_s2_delete_avg
+printf "\t"
+printf %lf $avg_s2_search_avg
+
+echo ""

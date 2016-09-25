@@ -1,0 +1,91 @@
+#!/bin/bash
+
+# $1 : input file to execute.
+# $2 : output file.
+
+OUTPUT1=$2
+OUT_ALL1="output1_all.txt"
+
+N_TRIES=3;
+
+exec<$1
+
+# each line is in the format bellow:
+# <test_number> <insert_percent> <delete_percent> <search_percent> <keys_stage1> <keys_stage2> <T>
+
+
+
+test_number=0;
+insert_percent=0;
+delete_percent=0;
+search_percent=0;
+keys_stage1=0;
+keys_stage2=0;
+T=0;
+
+while read line
+do
+	i=0;
+	
+	pinsert_percent=$insert_percent;
+	pdelete_percent=$delete_percent;
+	psearch_percent=$search_percent;
+	pT=$T;
+	
+	for word in $line; do
+		if [ $i == 6 ]; then
+			T=$word; 
+		fi
+			
+		if [ $i == 5 ]; then
+			keys_stage2=$word; fi
+			
+		if [ $i == 4 ]; then
+			keys_stage1=$word; fi
+			
+		if [ $i == 3 ]; then
+			search_percent=$word; fi
+			
+		if [ $i == 2 ]; then
+			delete_percent=$word; fi
+			
+		if [ $i == 1 ]; then
+			insert_percent=$word; fi
+		
+		if [ $i == 0 ]; then
+			test_number=$word; fi
+			
+		let "i += 1"
+	done
+
+	toCompile=0;
+	if [ $pinsert_percent -ne $insert_percent ]; then
+		toCompile=1
+	fi
+	
+	if [ $pdelete_percent -ne $delete_percent ]; then
+		toCompile=1
+	fi
+	
+	if [ $psearch_percent -ne $search_percent ]; then
+		toCompile=1
+	fi
+	
+	if [ $pT -ne $T ]; then
+		toCompile=1
+	fi
+	
+	echo $test_number $insert_percent $delete_percent $search_percent $keys_stage1 $keys_stage2 $T
+	
+	if [ $toCompile -eq 1 ]; then
+		make clean >& /dev/null
+		make MAX_THREADS=$T MIN_ENTRIES=200 MAX_ENTRIES=450 INSERT_PERCENT=$insert_percent DELETE_PERCENT=$delete_percent SEARCH_PERCENT=$search_percent>& /dev/null
+		echo compiled: MAX_THREADS=$T MIN_ENTRIES=200 MAX_ENTRIES=450 INSERT_PERCENT=$insert_percent DELETE_PERCENT=$delete_percent SEARCH_PERCENT=$search_percent
+	fi
+	
+	echo === avgrun $N_TRIES $keys_stage1 $keys_stage2
+	
+	temp=$(./avgrun $N_TRIES $keys_stage1 $keys_stage2)
+	echo "$test_number	$temp" >> $OUTPUT1
+	
+done
